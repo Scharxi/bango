@@ -14,7 +14,7 @@ create table if not exists "accounts"
 (
     id                serial primary key not null,
     account_holder_id serial             not null,
-    account_number    serial             not null,
+    account_number    bigint unique      not null,
     balance           decimal            not null default 0.00,
     created_at        timestamp          not null default now(),
     FOREIGN KEY (account_holder_id) REFERENCES account_holders (id) on delete cascade
