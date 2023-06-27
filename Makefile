@@ -1,14 +1,14 @@
 migrateup:
-	migrate -path db/migration -database "postgresql://postgres:lms@localhost:5432/postgres?sslmode=disable" -verbose up
+	migrate -path db/migration -database "postgresql://postgres:bango@localhost:5432/postgres?sslmode=disable" -verbose up
 
 migrateup1:
-	migrate -path db/migration -database "postgresql://postgres:lms@localhost:5432/postgres?sslmode=disable" -verbose up 1
+	migrate -path db/migration -database "postgresql://postgres:bango@localhost:5432/postgres?sslmode=disable" -verbose up 1
 
 migratedown:
-	migrate -path db/migration -database "postgresql://postgres:lms@localhost:5432/postgres?sslmode=disable" -verbose down
+	migrate -path db/migration -database "postgresql://postgres:bango@localhost:5432/postgres?sslmode=disable" -verbose down
 
 migratedown1:
-	migrate -path db/migration -database "postgresql://postgres:lms@localhost:5432/postgres?sslmode=disable" -verbose down 1
+	migrate -path db/migration -database "postgresql://postgres:bango@localhost:5432/postgres?sslmode=disable" -verbose down 1
 
 migratecreate:
 	migrate create -ext sql -dir db/migration -seq $(name)
