@@ -15,7 +15,7 @@ func main() {
 	router := gin.Default()
 	v1 := router.Group("/api/v1")
 
-	routes.AddSampleRoutes(v1)
+	routes.AddAccountRoutes(v1)
 
 	router.Run(":8080")
 }
@@ -26,7 +26,7 @@ func initApp() {
 		log.Fatalln(err.Error())
 		return
 	}
-	conn, err := sql.Open("postgres", "postgresql://postgres:lms@localhost:5432/postgres?sslmode=disable")
+	conn, err := sql.Open("postgres", "postgresql://postgres:bango@localhost:5432/postgres?sslmode=disable")
 
 	if err != nil {
 		log.Fatal("cannot connect to db:", err)
