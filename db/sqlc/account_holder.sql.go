@@ -10,7 +10,9 @@ import (
 )
 
 const createAccountHolder = `-- name: CreateAccountHolder :one
-insert into "account_holders" (first_name, last_name, email, phone, address) values ($1, $2, $3, $4, $5) returning id
+insert into "account_holders" (first_name, last_name, email, phone, address)
+values ($1, $2, $3, $4, $5)
+returning id
 `
 
 type CreateAccountHolderParams struct {
@@ -33,4 +35,28 @@ func (q *Queries) CreateAccountHolder(ctx context.Context, arg CreateAccountHold
 	var id int32
 	err := row.Scan(&id)
 	return id, err
+}
+
+const doesEmailExist = `-- name: DoesEmailExist :one
+select exists(select 1 from "account_holders" where email = $1)
+`
+
+// description: Check if email exists
+func (q *Queries) DoesEmailExist(ctx context.Context, email string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, doesEmailExist, email)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const doesPhoneNumberExist = `-- name: DoesPhoneNumberExist :one
+select exists(select 1 from "account_holders" where phone = $1)
+`
+
+// description: Check if phone number exists
+func (q *Queries) DoesPhoneNumberExist(ctx context.Context, phone string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, doesPhoneNumberExist, phone)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
