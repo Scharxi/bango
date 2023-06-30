@@ -38,3 +38,37 @@ func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
 
 	return tx.Commit()
 }
+
+type CreateBankAccountParams struct {
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phone_number"`
+	Address     string `json:"address"`
+}
+
+func (store *Store) CreateBankAccountTx(ctx context.Context, args CreateBankAccountParams, accNumber int64) (int32, error) {
+	var result int32
+	err := store.execTx(ctx, func(queries *Queries) error {
+		holderId, err := store.CreateAccountHolder(ctx, CreateAccountHolderParams{
+			FirstName: args.FirstName,
+			LastName:  args.LastName,
+			Email:     args.Email,
+			Phone:     args.PhoneNumber,
+			Address:   args.Address,
+		})
+		if err != nil {
+			return err
+		}
+
+		result, err = store.CreateAccount(ctx, CreateAccountParams{
+			AccountHolderID: holderId,
+			AccountNumber:   accNumber,
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	return result, err
+}
