@@ -11,3 +11,7 @@ select exists(select 1 from "account_holders" where email = $1);
 -- name: DoesPhoneNumberExist :one
 -- description: Check if phone number exists
 select exists(select 1 from "account_holders" where phone = $1);
+
+-- name: DoesAccountHolderExist :one
+-- description: Check if account holder exists
+select exists(select 1 from "account_holders" where id = $1);

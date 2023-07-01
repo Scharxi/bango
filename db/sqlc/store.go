@@ -83,3 +83,24 @@ func (store *Store) CreateBankAccountTx(ctx context.Context, args CreateBankAcco
 	})
 	return result, err
 }
+
+func (store *Store) OpenBankAccountTx(ctx context.Context, holderId int32, accNum int64) (int32, error) {
+	var res int32
+	err := store.execTx(ctx, func(queries *Queries) error {
+
+		exists, err := store.DoesAccountHolderExist(ctx, holderId)
+		if !exists {
+			return fmt.Errorf("holder does not exists")
+		}
+
+		res, err = store.CreateAccount(ctx, CreateAccountParams{
+			AccountHolderID: holderId,
+			AccountNumber:   accNum,
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	return res, err
+}

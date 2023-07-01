@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	db "go-gin-template/db/sqlc"
 	"go-gin-template/util"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -45,8 +46,27 @@ func ValidateAccountNumber(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"exists": exists})
 }
 
+// OpenAccount POST /account/:holderid/open
+// It opens a new account for a given account holder
 func OpenAccount(c *gin.Context) {
+	param := c.Param("holderid")
+	holderId, err := strconv.ParseInt(param, 10, 64)
 
+	log.Println("Holder ID: ", holderId)
+
+	accountNumber, err := util.GenerateAccountNumber()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	id, err := util.GetStore().OpenBankAccountTx(c, int32(holderId), accountNumber)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"id": id, "message": "Successfully opened a new bank account"})
 }
 
 // GetAccount GET /account/:accnum

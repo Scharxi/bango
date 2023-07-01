@@ -37,6 +37,18 @@ func (q *Queries) CreateAccountHolder(ctx context.Context, arg CreateAccountHold
 	return id, err
 }
 
+const doesAccountHolderExist = `-- name: DoesAccountHolderExist :one
+select exists(select 1 from "account_holders" where id = $1)
+`
+
+// description: Check if account holder exists
+func (q *Queries) DoesAccountHolderExist(ctx context.Context, id int32) (bool, error) {
+	row := q.db.QueryRowContext(ctx, doesAccountHolderExist, id)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const doesEmailExist = `-- name: DoesEmailExist :one
 select exists(select 1 from "account_holders" where email = $1)
 `
