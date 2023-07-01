@@ -9,6 +9,8 @@ import (
 	"strconv"
 )
 
+// CreateAccount POST /account
+// Creates a new account
 func CreateAccount(c *gin.Context) {
 	var args db.CreateBankAccountParams
 	if err := c.ShouldBindJSON(&args); err != nil {
@@ -31,6 +33,8 @@ func CreateAccount(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"id": id, "message": "Account created successfully"})
 }
 
+// ValidateAccountNumber GET /account/:accnum/validate
+// Checks if the provided account number is valid
 func ValidateAccountNumber(c *gin.Context) {
 	param := c.Param("accnum")
 	accountNumber, err := strconv.ParseInt(param, 10, 64)
