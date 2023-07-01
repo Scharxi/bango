@@ -5,7 +5,10 @@ import (
 	db "go-gin-template/db/sqlc"
 	"go-gin-template/util"
 	"net/http"
+	"strconv"
 )
+
+const defaultAccountsLimit = "10"
 
 func CreateAccount(c *gin.Context) {
 	var args db.CreateBankAccountParams
@@ -29,12 +32,76 @@ func CreateAccount(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"id": id, "message": "Account created successfully"})
 }
 
+func ValidateAccountNumber(c *gin.Context) {
+	param := c.Param("accnum")
+	accountNumber, err := strconv.ParseInt(param, 10, 64)
+
+	exists, err := util.GetStore().DoesAccountNumberExist(c, accountNumber)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"exists": exists})
+}
+
 func OpenAccount(c *gin.Context) {
 
 }
 
+// GetAccount GET /account/:accnum
+// Retrieve a single account by its account number
 func GetAccount(c *gin.Context) {
+	param := c.Param("accnum")
+	accountNumber, err := strconv.ParseInt(param, 10, 64)
 
+	account, err := util.GetStore().GetAccountByAccountNumber(c, accountNumber)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, account)
+}
+
+// GetAccountWithHolder GET /account/:accnum/holder
+// Retrieve a single account including the account holder information by its account number
+func GetAccountWithHolder(c *gin.Context) {
+	param := c.Param("accnum")
+	accountNumber, err := strconv.ParseInt(param, 10, 64)
+
+	account, err := util.GetStore().GetAccountWithHolder(c, accountNumber)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, account)
+}
+
+// GetAccountsWithHolderId GET /account/holder/:id
+// Retrieve all accounts including by its account holder id
+func GetAccountsWithHolderId(c *gin.Context) {
+	var limit, offset int32
+
+	util.GetPaging(c, &offset, &limit)
+
+	param := c.Param("id")
+	holderId, err := strconv.ParseInt(param, 10, 64)
+
+	var args = db.GetAccountsFromHolderParams{
+		AccountHolderID: int32(holderId),
+		Limit:           limit,
+		Offset:          offset,
+	}
+
+	accounts, err := util.GetStore().GetAccountsFromHolder(c, args)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, accounts)
 }
 
 func UpdateAccount(c *gin.Context) {

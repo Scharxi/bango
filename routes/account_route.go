@@ -6,7 +6,10 @@ import (
 )
 
 func AddAccountRoutes(router *gin.RouterGroup) {
-	router.GET("/account", controller.GetAccount)
+	router.GET("/account/:accnum", controller.GetAccount)
+	router.GET("/account/:accnum/holder", controller.GetAccountWithHolder)
+	router.GET("/account/holder/:id", controller.GetAccountsWithHolderId)
+	router.GET("/account/:accnum/validate", controller.ValidateAccountNumber)
 	router.POST("/account", controller.CreateAccount)
 	router.PUT("/account/:id", controller.UpdateAccount)
 	router.DELETE("/account/:id", controller.DeleteAccount)

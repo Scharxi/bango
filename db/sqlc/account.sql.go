@@ -28,6 +28,17 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (i
 	return id, err
 }
 
+const doesAccountNumberExist = `-- name: DoesAccountNumberExist :one
+select exists(select 1 from "accounts" where account_number = $1)
+`
+
+func (q *Queries) DoesAccountNumberExist(ctx context.Context, accountNumber int64) (bool, error) {
+	row := q.db.QueryRowContext(ctx, doesAccountNumberExist, accountNumber)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const getAccountByAccountNumber = `-- name: GetAccountByAccountNumber :one
 select id, account_holder_id, account_number, balance, created_at
 from "accounts"
@@ -48,7 +59,16 @@ func (q *Queries) GetAccountByAccountNumber(ctx context.Context, accountNumber i
 }
 
 const getAccountWithHolder = `-- name: GetAccountWithHolder :one
-select accounts.id, account_holder_id, account_number, balance, accounts.created_at, account_holder.id, first_name, last_name, email, phone, address, account_holder.created_at
+select "accounts".id,
+       "accounts".account_number,
+       "accounts".balance,
+       "accounts".created_at,
+       "account_holder".id as "holder_id",
+       "account_holder".first_name,
+       "account_holder".last_name,
+       "account_holder".email,
+       "account_holder".phone,
+       "account_holder".address
 from "accounts"
          join "account_holders" as "account_holder"
               on "accounts".account_holder_id = "account_holder".id
@@ -56,18 +76,16 @@ where "accounts".account_number = $1
 `
 
 type GetAccountWithHolderRow struct {
-	ID              int32     `json:"id"`
-	AccountHolderID int32     `json:"account_holder_id"`
-	AccountNumber   int64     `json:"account_number"`
-	Balance         string    `json:"balance"`
-	CreatedAt       time.Time `json:"created_at"`
-	ID_2            int32     `json:"id_2"`
-	FirstName       string    `json:"first_name"`
-	LastName        string    `json:"last_name"`
-	Email           string    `json:"email"`
-	Phone           string    `json:"phone"`
-	Address         string    `json:"address"`
-	CreatedAt_2     time.Time `json:"created_at_2"`
+	ID            int32     `json:"id"`
+	AccountNumber int64     `json:"account_number"`
+	Balance       string    `json:"balance"`
+	CreatedAt     time.Time `json:"created_at"`
+	HolderID      int32     `json:"holder_id"`
+	FirstName     string    `json:"first_name"`
+	LastName      string    `json:"last_name"`
+	Email         string    `json:"email"`
+	Phone         string    `json:"phone"`
+	Address       string    `json:"address"`
 }
 
 func (q *Queries) GetAccountWithHolder(ctx context.Context, accountNumber int64) (GetAccountWithHolderRow, error) {
@@ -75,17 +93,57 @@ func (q *Queries) GetAccountWithHolder(ctx context.Context, accountNumber int64)
 	var i GetAccountWithHolderRow
 	err := row.Scan(
 		&i.ID,
-		&i.AccountHolderID,
 		&i.AccountNumber,
 		&i.Balance,
 		&i.CreatedAt,
-		&i.ID_2,
+		&i.HolderID,
 		&i.FirstName,
 		&i.LastName,
 		&i.Email,
 		&i.Phone,
 		&i.Address,
-		&i.CreatedAt_2,
 	)
 	return i, err
+}
+
+const getAccountsFromHolder = `-- name: GetAccountsFromHolder :many
+select id, account_holder_id, account_number, balance, created_at
+from "accounts"
+where account_holder_id = $1
+limit $2 offset $3
+`
+
+type GetAccountsFromHolderParams struct {
+	AccountHolderID int32 `json:"account_holder_id"`
+	Limit           int32 `json:"limit"`
+	Offset          int32 `json:"offset"`
+}
+
+func (q *Queries) GetAccountsFromHolder(ctx context.Context, arg GetAccountsFromHolderParams) ([]Account, error) {
+	rows, err := q.db.QueryContext(ctx, getAccountsFromHolder, arg.AccountHolderID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Account{}
+	for rows.Next() {
+		var i Account
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountHolderID,
+			&i.AccountNumber,
+			&i.Balance,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
