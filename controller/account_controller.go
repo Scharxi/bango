@@ -9,8 +9,6 @@ import (
 	"strconv"
 )
 
-const defaultAccountsLimit = "10"
-
 func CreateAccount(c *gin.Context) {
 	var args db.CreateBankAccountParams
 	if err := c.ShouldBindJSON(&args); err != nil {
